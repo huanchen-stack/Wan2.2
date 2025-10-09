@@ -108,6 +108,8 @@ class WanTI2V:
             shard_fn=shard_fn,
             convert_model_dtype=convert_model_dtype)
 
+        print(self.model)
+
         if use_sp:
             self.sp_size = get_world_size()
         else:

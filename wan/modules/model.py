@@ -131,7 +131,18 @@ class WanSelfAttention(nn.Module):
             grid_sizes(Tensor): Shape [B, 3], the second dimension contains (F, H, W)
             freqs(Tensor): Rope freqs, shape [1024, C / num_heads / 2]
         """
+
+        profile = True
+        # profile = False
+        if profile:
+            _start = torch.cuda.Event(enable_timing=True)
+            _end = torch.cuda.Event(enable_timing=True)
+
         b, s, n, d = *x.shape[:2], self.num_heads, self.head_dim
+
+        if profile:
+            print(f"\tinput shape {b}, {s}, {n}, {d}")
+            _start.record()
 
         # query, key, value function
         def qkv_fn(x):
@@ -142,6 +153,12 @@ class WanSelfAttention(nn.Module):
 
         q, k, v = qkv_fn(x)
 
+        if profile:
+            _end.record()
+            torch.cuda.synchronize()
+            print(f'\tqkv time: {_start.elapsed_time(_end)} ms')
+            _start.record()
+
         x = flash_attention(
             q=rope_apply(q, grid_sizes, freqs),
             k=rope_apply(k, grid_sizes, freqs),
@@ -149,9 +166,21 @@ class WanSelfAttention(nn.Module):
             k_lens=seq_lens,
             window_size=self.window_size)
 
+        if profile:
+            _end.record()
+            torch.cuda.synchronize()
+            print(f'\tattn time: {_start.elapsed_time(_end)} ms')
+            _start.record()
+
         # output
         x = x.flatten(2)
         x = self.o(x)
+
+        if profile:
+            _end.record()
+            torch.cuda.synchronize()
+            print(f'\toutput time: {_start.elapsed_time(_end)} ms')
+
         return x
 
 
@@ -239,12 +268,25 @@ class WanAttentionBlock(nn.Module):
             e = (self.modulation.unsqueeze(0) + e).chunk(6, dim=2)
         assert e[0].dtype == torch.float32
 
+        profile = True
+        # profile = False
+        if profile:
+            _start = torch.cuda.Event(enable_timing=True)
+            _end = torch.cuda.Event(enable_timing=True)
+            _start.record()
+
         # self-attention
         y = self.self_attn(
             self.norm1(x).float() * (1 + e[1].squeeze(2)) + e[0].squeeze(2),
             seq_lens, grid_sizes, freqs)
         with torch.amp.autocast('cuda', dtype=torch.float32):
             x = x + y * e[2].squeeze(2)
+
+        if profile:
+            _end.record()
+            torch.cuda.synchronize()
+            print(f'self-attn time: {_start.elapsed_time(_end)} ms')
+            _start.record()
 
         # cross-attention & ffn function
         def cross_attn_ffn(x, context, context_lens, e):
@@ -256,6 +298,12 @@ class WanAttentionBlock(nn.Module):
             return x
 
         x = cross_attn_ffn(x, context, context_lens, e)
+
+        if profile:
+            _end.record()
+            torch.cuda.synchronize()
+            print(f'cross-attn & ffn time: {_start.elapsed_time(_end)} ms')
+
         return x
 
 

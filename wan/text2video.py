@@ -107,6 +107,8 @@ class WanT2V:
             shard_fn=shard_fn,
             convert_model_dtype=convert_model_dtype)
 
+        print("low noise model:\n", self.low_noise_model)
+
         self.high_noise_model = WanModel.from_pretrained(
             checkpoint_dir, subfolder=config.high_noise_checkpoint)
         self.high_noise_model = self._configure_model(
@@ -115,6 +117,9 @@ class WanT2V:
             dit_fsdp=dit_fsdp,
             shard_fn=shard_fn,
             convert_model_dtype=convert_model_dtype)
+
+        print("high noise model:\n", self.high_noise_model)
+
         if use_sp:
             self.sp_size = get_world_size()
         else:

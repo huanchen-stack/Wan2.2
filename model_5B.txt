@@ -1,0 +1,49 @@
+WanModel(
+  (patch_embedding): Conv3d(48, 3072, kernel_size=(1, 2, 2), stride=(1, 2, 2))
+  (text_embedding): Sequential(
+    (0): Linear(in_features=4096, out_features=3072, bias=True)
+    (1): GELU(approximate='tanh')
+    (2): Linear(in_features=3072, out_features=3072, bias=True)
+  )
+  (time_embedding): Sequential(
+    (0): Linear(in_features=256, out_features=3072, bias=True)
+    (1): SiLU()
+    (2): Linear(in_features=3072, out_features=3072, bias=True)
+  )
+  (time_projection): Sequential(
+    (0): SiLU()
+    (1): Linear(in_features=3072, out_features=18432, bias=True)
+  )
+  (blocks): ModuleList(
+    (0-29): 30 x WanAttentionBlock(
+      (norm1): WanLayerNorm((3072,), eps=1e-06, elementwise_affine=False)
+      (self_attn): WanSelfAttention(
+        (q): Linear(in_features=3072, out_features=3072, bias=True)
+        (k): Linear(in_features=3072, out_features=3072, bias=True)
+        (v): Linear(in_features=3072, out_features=3072, bias=True)
+        (o): Linear(in_features=3072, out_features=3072, bias=True)
+        (norm_q): WanRMSNorm()
+        (norm_k): WanRMSNorm()
+      )
+      (norm3): WanLayerNorm((3072,), eps=1e-06, elementwise_affine=True)
+      (cross_attn): WanCrossAttention(
+        (q): Linear(in_features=3072, out_features=3072, bias=True)
+        (k): Linear(in_features=3072, out_features=3072, bias=True)
+        (v): Linear(in_features=3072, out_features=3072, bias=True)
+        (o): Linear(in_features=3072, out_features=3072, bias=True)
+        (norm_q): WanRMSNorm()
+        (norm_k): WanRMSNorm()
+      )
+      (norm2): WanLayerNorm((3072,), eps=1e-06, elementwise_affine=False)
+      (ffn): Sequential(
+        (0): Linear(in_features=3072, out_features=14336, bias=True)
+        (1): GELU(approximate='tanh')
+        (2): Linear(in_features=14336, out_features=3072, bias=True)
+      )
+    )
+  )
+  (head): Head(
+    (norm): WanLayerNorm((3072,), eps=1e-06, elementwise_affine=False)
+    (head): Linear(in_features=3072, out_features=192, bias=True)
+  )
+)
