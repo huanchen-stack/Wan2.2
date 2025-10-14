@@ -462,7 +462,7 @@ def generate(args):
             seed=args.base_seed,
             offload_model=args.offload_model)
 
-        if frame_num == -1:
+        if args.frame_num == -1:
             for frame_num in [17, 33, 49, 65, 81]:
                 time.sleep(5)
                 logging.info(f"Generating video with {frame_num} frames ...")
