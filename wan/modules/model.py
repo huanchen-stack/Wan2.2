@@ -288,21 +288,40 @@ class WanAttentionBlock(nn.Module):
             print(f'self-attn time: {_start.elapsed_time(_end)} ms')
             _start.record()
 
-        # cross-attention & ffn function
-        def cross_attn_ffn(x, context, context_lens, e):
-            x = x + self.cross_attn(self.norm3(x), context, context_lens)
+        # # cross-attention & ffn function
+        # def cross_attn_ffn(x, context, context_lens, e):
+        #     x = x + self.cross_attn(self.norm3(x), context, context_lens)
+        #     y = self.ffn(
+        #         self.norm2(x).float() * (1 + e[4].squeeze(2)) + e[3].squeeze(2))
+        #     with torch.amp.autocast('cuda', dtype=torch.float32):
+        #         x = x + y * e[5].squeeze(2)
+        #     return x
+        # x = cross_attn_ffn(x, context, context_lens, e)
+
+        def _cross_attn(x, context, context_lens):
+            return x + self.cross_attn(self.norm3(x), context, context_lens)
+
+        x = _cross_attn(x, context, context_lens)
+
+        if profile:
+            _end.record()
+            torch.cuda.synchronize()
+            print(f'cross-attn time: {_start.elapsed_time(_end)} ms')
+            _start.record()
+
+        def _ffn(x, e):
             y = self.ffn(
                 self.norm2(x).float() * (1 + e[4].squeeze(2)) + e[3].squeeze(2))
             with torch.amp.autocast('cuda', dtype=torch.float32):
                 x = x + y * e[5].squeeze(2)
             return x
-
-        x = cross_attn_ffn(x, context, context_lens, e)
+        
+        x = _ffn(x, e)
 
         if profile:
             _end.record()
             torch.cuda.synchronize()
-            print(f'cross-attn & ffn time: {_start.elapsed_time(_end)} ms')
+            print(f'ffn time: {_start.elapsed_time(_end)} ms')
 
         return x
 
