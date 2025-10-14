@@ -442,33 +442,70 @@ def generate(args):
         )
 
         logging.info(f"Generating video ...")
-        video = wan_ti2v.generate(
-            args.prompt,
-            img=img,
-            size=SIZE_CONFIGS[args.size],
-            max_area=MAX_AREA_CONFIGS[args.size],
-            frame_num=args.frame_num,
-            shift=args.sample_shift,
-            sample_solver=args.sample_solver,
-            sampling_steps=args.sample_steps,
-            guide_scale=args.sample_guide_scale,
-            seed=args.base_seed,
-            offload_model=args.offload_model)
-        
-        time.sleep(5)
+
+        if frame_num := args.frame_num == -1:
+            logging.info(f"Warming up the model ...")
+            frame_num = 81
+        else:
+            frame_num = args.frame_num
 
         video = wan_ti2v.generate(
             args.prompt,
             img=img,
             size=SIZE_CONFIGS[args.size],
             max_area=MAX_AREA_CONFIGS[args.size],
-            frame_num=args.frame_num,
+            frame_num=frame_num,
             shift=args.sample_shift,
             sample_solver=args.sample_solver,
             sampling_steps=args.sample_steps,
             guide_scale=args.sample_guide_scale,
             seed=args.base_seed,
             offload_model=args.offload_model)
+
+        if frame_num == -1:
+            for frame_num in [17, 33, 49, 65, 81]:
+                time.sleep(5)
+                logging.info(f"Generating video with {frame_num} frames ...")
+                video = wan_ti2v.generate(
+                    args.prompt,
+                    img=img,
+                    size=SIZE_CONFIGS[args.size],
+                    max_area=MAX_AREA_CONFIGS[args.size],
+                    frame_num=frame_num,
+                    shift=args.sample_shift,
+                    sample_solver=args.sample_solver,
+                    sampling_steps=args.sample_steps,
+                    guide_scale=args.sample_guide_scale,
+                    seed=args.base_seed,
+                    offload_model=args.offload_model)
+
+        # video = wan_ti2v.generate(
+        #     args.prompt,
+        #     img=img,
+        #     size=SIZE_CONFIGS[args.size],
+        #     max_area=MAX_AREA_CONFIGS[args.size],
+        #     frame_num=args.frame_num,
+        #     shift=args.sample_shift,
+        #     sample_solver=args.sample_solver,
+        #     sampling_steps=args.sample_steps,
+        #     guide_scale=args.sample_guide_scale,
+        #     seed=args.base_seed,
+        #     offload_model=args.offload_model)
+        
+        # time.sleep(5)
+
+        # video = wan_ti2v.generate(
+        #     args.prompt,
+        #     img=img,
+        #     size=SIZE_CONFIGS[args.size],
+        #     max_area=MAX_AREA_CONFIGS[args.size],
+        #     frame_num=args.frame_num,
+        #     shift=args.sample_shift,
+        #     sample_solver=args.sample_solver,
+        #     sampling_steps=args.sample_steps,
+        #     guide_scale=args.sample_guide_scale,
+        #     seed=args.base_seed,
+        #     offload_model=args.offload_model)
 
     elif "animate" in args.task:
         logging.info("Creating Wan-Animate pipeline.")
