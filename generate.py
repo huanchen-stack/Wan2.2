@@ -445,7 +445,7 @@ def generate(args):
 
         if frame_num := args.frame_num == -1:
             logging.info(f"Warming up the model ...")
-            frame_num = 81
+            frame_num = 121
         else:
             frame_num = args.frame_num
 
@@ -463,7 +463,8 @@ def generate(args):
             offload_model=args.offload_model)
 
         if args.frame_num == -1:
-            for frame_num in [17, 33, 49, 65, 81]:
+            for vid_len in range(5):
+                frame_num = 24 * (vid_len+1) + 1
                 time.sleep(5)
                 logging.info(f"Generating video with {frame_num} frames ...")
                 video = wan_ti2v.generate(
